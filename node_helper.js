@@ -133,7 +133,6 @@ module.exports = NodeHelper.create({
 		}	
 		
 		getVerisure(this.config);
-//		getToken(this.config).then(getDeviceData);
 
 		setTimeout(function() { self.getData(); }, this.config.refreshInterval);
 	},
