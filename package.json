@@ -1,0 +1,16 @@
+{
+  "name": "mmm-verisure",
+  "version": "1.0.0",
+  "description": "A MagicMirror module for getting data from a Verisure alarm system",
+  "main": "MMM-Verisure.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Martin Burheim Tingstad",
+  "license": "ISC",
+  "devDependencies": {},
+  "dependencies": {
+    "verisure": "^3.0.0",
+    "simple-oauth2": "1.5.0"
+  }
+}
