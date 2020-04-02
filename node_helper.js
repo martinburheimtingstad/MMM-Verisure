@@ -12,7 +12,6 @@ var request = require('request');
 
 module.exports = NodeHelper.create({
 
-
 	socketNotificationReceived: function(notification, payload) {
 		var self = this;
 		if (notification === 'CONFIG') {
@@ -29,16 +28,41 @@ module.exports = NodeHelper.create({
 
 		function getVerisure(config) {
 			try {
+				var names = [];
+				var overviews = [];
+				var toReturn = [];
 				const verisure = new Verisure(config.username, config.password);
 				verisure.getToken()
-					.then(() => verisure.getInstallations())
-					.then(installations => installations[0].getOverview())
-					.then((overview) => {
-						console.log(`${new Date()} : Polling Verisure API...`);
+				.then(() => verisure.getInstallations())
+				.then((installations) => {
+					self.sendSocketNotification("DATA", installations);
+					return installations;
+//					
+				})
+				.then((installations) => {
+					for(var i = 0; i < installations.length; i++) {
+						installations[i].getOverview().then((overview) => {
+							overviews.unshift(overview);
+							if(overviews.length === installations.length) {
+								self.sendSocketNotification("OVERVIEWS", overviews);
+							}
+						});
+					}
+					self.sendSocketNotification("DATA", installations);
+//					installations[0].getOverview().then((overview) => overviews.push(overview));
+					//					names.push(installations[0].config.alias);
+				})
+//				.then((overview) => {
+//					overviews = overviews.concat()
+//					console.log(overview);
+//				})
+//					.then(installations => installations[1].getOverview()) 
+//					.then((overview) => {
+//						console.log(`${new Date()} : Polling Verisure API...`);
 		
-						if (flagDebug) {
-							console.log('OVERVIEW:', overview);
-						}
+//						if (flagDebug) {
+//							console.log('OVERVIEW:', overview);
+//						}
 						/*
 		
 						// Overall alarm state 
@@ -120,12 +144,10 @@ module.exports = NodeHelper.create({
 						overview.doorWindow.doorWindowDevice.forEach(doorWindow => {
 							mqttClient.publish(`${config.mqttRootTopic}/${verisure_prefix}/tele/doorWindow/STATE`, JSON.stringify(doorWindow));
 						}); */
-					})
+					//})
 					.catch((error) => {
 						console.error('Error 1: ', error);
 					});
-		
-		
 		
 			} catch (err) {
 				console.log('Error 2: ', err.message);

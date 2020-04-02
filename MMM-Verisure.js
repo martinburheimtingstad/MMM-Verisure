@@ -11,8 +11,8 @@ Module.register("MMM-Verisure",{
 
 	defaults: {
 		// Read config and secrets from environment variables
-		refreshInterval: 1000 * 60 * 5, // refresh every 5 minutes
-		updateInterval: 1000 * 15, // update every 15 seconds
+		refreshInterval: 1000 * 30, // refresh every 5 seconds
+		updateInterval: 1000 * 1, // update every 1 seconds
 		timeFormat: config.timeFormat,
 		lang: config.language,
 
@@ -23,7 +23,8 @@ Module.register("MMM-Verisure",{
 	start: function() {
 		console.log('Starting module: ' + this.name);
 		var self = this;
-		var deviceData = null;
+		var data = null;
+		var overviews = null;
 		var dataNotification = null;
 
 		// Flag for check if module is loaded
@@ -73,76 +74,31 @@ Module.register("MMM-Verisure",{
 			return wrapper;
 		}
 
-		var operationIcon = document.createElement('img');
-		operationIcon.src = "https://aquarea-smart.panasonic.com/remote/images/heat_pump.png";
-		operationIcon.style = "width: 25px; height: 25px;"
+		var installations = document.createElement("div");
 
-		var outdoorDiv = document.createElement("div");
-		outdoorDiv.align = 'center';
+		var toAdd = document.createDocumentFragment();
+		for (var i = 0; i < this.data.length; i++) {
+			var installation = this.data[i];
 
-		var outdoorIcon = document.createElement('img');
-		outdoorIcon.src = 'https://aquarea-smart.panasonic.com/remote/images/outdoors.png';
-		outdoorIcon.width = 50;
-		outdoorIcon.height = 50;
-		var outdoorTemperature = document.createElement("div");
-		outdoorTemperature.innerHTML = this.deviceData.status[0].outdoorNow+'&deg;';
+			var installationDiv = document.createElement("div");
+			installationDiv.id = 'installation'+i;
+			installationDiv.innerHTML = installation.config.alias;
 
-		outdoorDiv.appendChild(outdoorIcon);
-		outdoorDiv.appendChild(outdoorTemperature);
+			var alarmState = document.createElement("div");
+			alarmState.innerHTML = this.overviews[i].armState.statusType;
 
-		
-
-		var tankDiv = document.createElement("div");
-		tankDiv.align = 'center';
-
-		var tankIcon = document.createElement('img');
-		tankIcon.src = 'https://aquarea-smart.panasonic.com/remote/images/icon_tank.png';
-		tankIcon.width = 100;
-		tankIcon.height = 100;
-		tankIcon.style = "filter: grayscale(50%)";
-		var tankTemperature = document.createElement("div");
-		tankTemperature.classList.add("medium");
-		tankTemperature.classList.add("light");
-		tankTemperature.innerHTML = this.deviceData.status[0].tankStatus[0].temparatureNow+'&deg;';
-
-		tankDiv.appendChild(tankIcon);
-		if(this.deviceData.status[0].direction === 2) {
-			tankDiv.appendChild(operationIcon);
+			toAdd.appendChild(installationDiv);
+			toAdd.appendChild(alarmState);
 		}
-		tankDiv.appendChild(tankTemperature);
-
-		var zoneDiv = document.createElement("div");
-		zoneDiv.align = 'center';
-
-		var zoneIcon = document.createElement('img');
-		zoneIcon.src = 'https://aquarea-smart.panasonic.com/remote/images/icon_sun.png';
-		zoneIcon.width = 100;
-		zoneIcon.height = 100;
-		zoneIcon.style = "filter: grayscale(50%)";
-
-		if(this.deviceData.status[0].direction === 1) {
-			zoneDiv.appendChild(operationIcon);
-		}
-
-		var zoneTemperature = document.createElement("div");
-		zoneTemperature.classList.add("medium");
-		zoneTemperature.classList.add("light");
-
-		zoneTemperature.innerHTML = this.deviceData.status[0].zoneStatus[0].temparatureNow+'&deg;';
-		
-		zoneDiv.appendChild(zoneIcon);
-		zoneDiv.appendChild(zoneTemperature);
-
-		wrapper.appendChild(outdoorDiv);
-		wrapper.appendChild(tankDiv);
-		wrapper.appendChild(zoneDiv);
+		installations.appendChild(toAdd);
+		wrapper.appendChild(installations);
 
 		return wrapper;
 	},
 
 	processData: function(data) {
 		var self = this;
-		this.deviceData = data;
+		this.data = data;
 		if (this.loaded === false) {
 			 self.updateDom(self.config.animationSpeed);
 		}
@@ -150,17 +106,30 @@ Module.register("MMM-Verisure",{
 
 		// the data if load
 		// send notification to helper
-		this.sendSocketNotification("DEVICE_DATA", data);
+		this.sendSocketNotification("DATA", data);
+	},
+
+	processOverviews: function(data) {
+		var self = this;
+		this.overviews = data;
+		if (this.loaded === true) {
+			 self.updateDom(self.config.animationSpeed);
+		}
 	},
 
  	socketNotificationReceived: function(notification, payload) {
 		if (notification === "STARTED") {
 			this.updateDom();
 		}
-		else if(notification === "DEVICE_DATA") {
+		else if(notification === "DATA") {
 			// set dataNotification
 			this.dataNotification = payload;
 			this.processData(payload);
+			this.updateDom();
+		}
+		else if(notification === "OVERVIEWS") {
+			this.dataNotification = payload;
+			this.processOverviews(payload);
 			this.updateDom();
 		}
 	},
