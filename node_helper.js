@@ -42,7 +42,7 @@ module.exports = NodeHelper.create({
 				.then((installations) => {
 					for(var i = 0; i < installations.length; i++) {
 						installations[i].getOverview().then((overview) => {
-							overviews.unshift(overview);
+							overviews.push(overview);
 							if(overviews.length === installations.length) {
 								self.sendSocketNotification("OVERVIEWS", overviews);
 							}

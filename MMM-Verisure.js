@@ -11,8 +11,8 @@ Module.register("MMM-Verisure",{
 
 	defaults: {
 		// Read config and secrets from environment variables
-		refreshInterval: 1000 * 30, // refresh every 5 seconds
-		updateInterval: 1000 * 30, // update every 1 seconds
+		refreshInterval: 1000 * 60 * 5, // refresh every 5 seconds
+		updateInterval: 1000 * 60 * 5, // update every 1 seconds
 		timeFormat: config.timeFormat,
 		lang: config.language,
 
@@ -45,7 +45,7 @@ Module.register("MMM-Verisure",{
 	},
 	
 	getStyles: function() {
-		return ['https://mypages.verisure.com/newapp/static/css/main.1cacec1b.chunk.css'];
+		return [];
 	},
 
 	/* scheduleUpdate()
@@ -79,33 +79,43 @@ Module.register("MMM-Verisure",{
 		var toAdd = document.createDocumentFragment();
 		for (var i = 0; i < this.data.length; i++) {
 			var installation = this.data[i];
+			var overview = this.overviews[i];
 
 			var installationDiv = document.createElement("div");
 			installationDiv.id = 'installation'+i;
-			installationDiv.innerHTML = installation.config.alias;
+			installationDiv.classList.add("medium");
+			installationDiv.classList.add("light");
 
-			var alarmState = document.createElement("div");
-			alarmState.classList.add('ArmStateButton-arm-button-wrapper-fgZ6z');
-			if(this.overviews[i].armState.statusType === "DISARMED") {
-				var button = document.createElement("button");
-				button.id = 'button'+i;
-				button.classList.add('ArmStateButton-button-3SLXa');
-				button.classList.add('ArmStateButton-disarmed-zJa8M');
-				
-				var icon = document.createElement("div");
-
-				icon.classList.add('Icon-icon-font-1jSmW');
-				icon.classList.add('icomoon-icon-disarmed-1xmI4');
-				icon.classList.add('Icon-small-2VXAK');
-				icon.classList.add('ArmStateButton-arm-icon-1Ul30');
-				icon.innerHTML = '&#x1F513;'
-
-				button.appendChild(icon);
-				alarmState.appendChild(button);
+			if(overview.armState.statusType === "DISARMED") {
+				installationDiv.innerHTML = installation.config.alias+': Av';
+			}
+			else if(overview.armState.statusType === "ARMED_HOME") {
+				installationDiv.innerHTML = installation.config.alias+': Skall';
+			}
+			else if(overview.armState.statusType === "ARMED_AWAY") {
+				installationDiv.innerHTML = installation.config.alias+': Full';
+			}
+			else {
+				installationDiv.innerHTML = installation.config.alias+': Ukjent';
 			}
 
+			var temperaturerDiv = document.createElement("div");
+			
+			if(typeof overview !== "undefined") {
+				overview.climateValues.forEach(climateValue => {
+					var sensorDiv = document.createElement("div");
+					sensorDiv.classList.add("small");
+					sensorDiv.classList.add("light");
+//					sensorDiv.innerHTML = `${climateValue.deviceArea}`+JSON.stringify(climateValue);
+					sensorDiv.innerHTML = `${climateValue.deviceArea}`+': '+`${climateValue.temperature}`+'&deg;';
+					sensorDiv.id = installation.config.alias+'sensor'+i;
+					temperaturerDiv.appendChild(sensorDiv);
+				})
+			};
+			installationDiv.id = 'installation'+i;
+
 			toAdd.appendChild(installationDiv);
-			toAdd.appendChild(alarmState);
+			toAdd.appendChild(temperaturerDiv);
 		}
 		installations.appendChild(toAdd);
 		wrapper.appendChild(installations);
