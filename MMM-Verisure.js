@@ -12,7 +12,7 @@ Module.register("MMM-Verisure",{
 	defaults: {
 		// Read config and secrets from environment variables
 		refreshInterval: 1000 * 30, // refresh every 5 seconds
-		updateInterval: 1000 * 1, // update every 1 seconds
+		updateInterval: 1000 * 30, // update every 1 seconds
 		timeFormat: config.timeFormat,
 		lang: config.language,
 
@@ -45,7 +45,7 @@ Module.register("MMM-Verisure",{
 	},
 	
 	getStyles: function() {
-		return [];
+		return ['https://mypages.verisure.com/newapp/static/css/main.1cacec1b.chunk.css'];
 	},
 
 	/* scheduleUpdate()
@@ -85,7 +85,24 @@ Module.register("MMM-Verisure",{
 			installationDiv.innerHTML = installation.config.alias;
 
 			var alarmState = document.createElement("div");
-			alarmState.innerHTML = this.overviews[i].armState.statusType;
+			alarmState.classList.add('ArmStateButton-arm-button-wrapper-fgZ6z');
+			if(this.overviews[i].armState.statusType === "DISARMED") {
+				var button = document.createElement("button");
+				button.id = 'button'+i;
+				button.classList.add('ArmStateButton-button-3SLXa');
+				button.classList.add('ArmStateButton-disarmed-zJa8M');
+				
+				var icon = document.createElement("div");
+
+				icon.classList.add('Icon-icon-font-1jSmW');
+				icon.classList.add('icomoon-icon-disarmed-1xmI4');
+				icon.classList.add('Icon-small-2VXAK');
+				icon.classList.add('ArmStateButton-arm-icon-1Ul30');
+				icon.innerHTML = '&#x1F513;'
+
+				button.appendChild(icon);
+				alarmState.appendChild(button);
+			}
 
 			toAdd.appendChild(installationDiv);
 			toAdd.appendChild(alarmState);
