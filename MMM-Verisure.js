@@ -11,8 +11,8 @@ Module.register("MMM-Verisure",{
 
 	defaults: {
 		// Read config and secrets from environment variables
-		refreshInterval: 1000 * 60 * 5, // refresh every 5 seconds
-		updateInterval: 1000 * 60 * 5, // update every 1 seconds
+		refreshInterval: 1000 * 60 * 30, // refresh every 30 minutes
+		updateInterval: 1000 * 60 * 30, // update every 30 minutes
 		timeFormat: config.timeFormat,
 		lang: config.language,
 
@@ -84,6 +84,7 @@ Module.register("MMM-Verisure",{
 			var installationDiv = document.createElement("div");
 			installationDiv.id = 'installation'+i;
 			installationDiv.classList.add("medium");
+			installationDiv.classList.add("bright");
 			installationDiv.classList.add("light");
 
 			if(overview.armState.statusType === "DISARMED") {
