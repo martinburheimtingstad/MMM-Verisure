@@ -17,14 +17,14 @@ Module.register("MMM-Verisure",{
 		lang: config.language,
 
 		initialLoadDelay: 0, // 0 seconds delay
-		retryDelay: 2500
+		retryDelay: 2500,
+		position: 'top_left'
 	},
 
 	start: function() {
-		console.log('Starting module: ' + this.name);
 		var self = this;
-		var data = null;
-		var overviews = null;
+		let data = [];
+		let installations = [];
 		var dataNotification = null;
 
 		// Flag for check if module is loaded
@@ -32,7 +32,6 @@ Module.register("MMM-Verisure",{
 
 		// Schedule update timer.
 		this.sendSocketNotification("CONFIG", this.config);
-		console.log('Sending socket notification: CONFIG');
 		
 		setInterval(function() {
 			self.updateDom();
@@ -66,6 +65,17 @@ Module.register("MMM-Verisure",{
 		}, nextLoad);
 	},
 
+	sensorsDiv: function(sensors) {
+		let temperaturerDiv = document.createElement("div");
+		for(var sensorcounter = 0; sensorcounter < sensors.length; sensorcounter++) {
+			var sensor = sensors[sensorcounter];
+			var sensorDiv = document.createElement("div");
+			sensorDiv.innerHTML = sensor.device.area + ": " + sensor.temperatureValue + "&deg;C";
+			temperaturerDiv.append(sensorDiv);
+		}
+		return temperaturerDiv;
+	},
+
 	getDom: function() {
 		var wrapper = document.createElement("div");
 
@@ -77,47 +87,23 @@ Module.register("MMM-Verisure",{
 		var installations = document.createElement("div");
 
 		var toAdd = document.createDocumentFragment();
-		for (var i = 0; i < this.data.length; i++) {
-			var installation = this.data[i];
-			var overview = this.overviews[i];
+		for (var i = 0; i < this.installations.length; i++) {
+			var installation = this.installations[i];
 
 			var installationDiv = document.createElement("div");
-			installationDiv.id = 'installation'+i;
+			installationDiv.id = 'installation' + i;
 			installationDiv.classList.add("medium");
 			installationDiv.classList.add("bright");
 			installationDiv.classList.add("light");
-
-			if(overview.armState.statusType === "DISARMED") {
-				installationDiv.innerHTML = installation.config.alias+': Av';
-			}
-			else if(overview.armState.statusType === "ARMED_HOME") {
-				installationDiv.innerHTML = installation.config.alias+': Skall';
-			}
-			else if(overview.armState.statusType === "ARMED_AWAY") {
-				installationDiv.innerHTML = installation.config.alias+': Full';
-			}
-			else {
-				installationDiv.innerHTML = installation.config.alias+': Ukjent';
-			}
-
-			var temperaturerDiv = document.createElement("div");
+			installationDiv.innerHTML = installation.name;
 			
-			if(typeof overview !== "undefined") {
-				overview.climateValues.forEach(climateValue => {
-					var sensorDiv = document.createElement("div");
-					sensorDiv.classList.add("small");
-					sensorDiv.classList.add("light");
-//					sensorDiv.innerHTML = `${climateValue.deviceArea}`+JSON.stringify(climateValue);
-					sensorDiv.innerHTML = `${climateValue.deviceArea}`+': '+`${climateValue.temperature}`+'&deg;';
-					sensorDiv.id = installation.config.alias+'sensor'+i;
-					temperaturerDiv.appendChild(sensorDiv);
-				})
-			};
 			installationDiv.id = 'installation'+i;
 
 			toAdd.appendChild(installationDiv);
-			toAdd.appendChild(temperaturerDiv);
+			toAdd.appendChild(this.sensorsDiv(installation.sensors));
 		}
+
+
 		installations.appendChild(toAdd);
 		wrapper.appendChild(installations);
 
@@ -126,23 +112,17 @@ Module.register("MMM-Verisure",{
 
 	processData: function(data) {
 		var self = this;
-		this.data = data;
-		if (this.loaded === false) {
-			 self.updateDom(self.config.animationSpeed);
-		}
+		this.installations = data;
 		this.loaded = true;
+
+		if (this.loaded === false) {
+                         self.updateDom(self.config.animationSpeed);
+                }
+                this.loaded = true;
 
 		// the data if load
 		// send notification to helper
 		this.sendSocketNotification("DATA", data);
-	},
-
-	processOverviews: function(data) {
-		var self = this;
-		this.overviews = data;
-		if (this.loaded === true) {
-			 self.updateDom(self.config.animationSpeed);
-		}
 	},
 
  	socketNotificationReceived: function(notification, payload) {
@@ -150,14 +130,10 @@ Module.register("MMM-Verisure",{
 			this.updateDom();
 		}
 		else if(notification === "DATA") {
+			payload.position = 'test';
 			// set dataNotification
 			this.dataNotification = payload;
 			this.processData(payload);
-			this.updateDom();
-		}
-		else if(notification === "OVERVIEWS") {
-			this.dataNotification = payload;
-			this.processOverviews(payload);
 			this.updateDom();
 		}
 	},
